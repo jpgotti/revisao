@@ -1,0 +1,101 @@
+/* App de revisão: folha de estilo. */
+:root{
+  /* cores pela função; trocar o tema é trocar este bloco */
+  --fundo:#F4F2ED;--superficie:#FFFFFF;--texto:#1B1D21;--texto-2:#5F6570;--borda:#E3DFD6;--borda-forte:#B9B4A8;
+  --acao:#1F4E79;--acao-texto:#FFFFFF;--feito:#2E7D4F;--marca-lacuna:#DCE7F3;
+  --fonte-card:ui-serif,"New York","Iowan Old Style",Georgia,serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;background:var(--fundo);color:var(--texto);touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;touch-action:manipulation}
+button:focus-visible{outline:3px solid var(--acao);outline-offset:2px}
+ul{list-style:none}
+
+.tela{max-width:480px;margin:0 auto;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;
+  padding:calc(12px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom))}
+
+/* topo */
+.topo{display:flex;align-items:center;justify-content:space-between;min-height:44px}
+.data,.conta{font-size:15px;color:var(--texto-2);font-variant-numeric:tabular-nums}
+.icone-btn{width:44px;height:44px;display:grid;place-items:center;color:var(--texto-2);border-radius:12px;margin-right:-10px}
+.icone-btn.esq{margin-right:0;margin-left:-10px}
+.icone-btn:active{opacity:.6;transform:scale(.94)}
+
+/* tela de hoje */
+.hoje{padding:28px 0 36px}
+.numero{font-size:76px;line-height:1;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.numero-rotulo{font-size:20px;font-weight:600;margin-top:6px}
+.meta{color:var(--texto-2);margin-top:14px}
+.meta-2{color:var(--texto-2);font-size:14px;margin-top:4px}
+.hoje .btn{margin-top:28px}
+
+/* botões: um principal por tela (cheio), o segundo vazado, o terceiro só texto */
+.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:56px;padding:8px 16px;border-radius:16px;
+  background:var(--acao);color:var(--acao-texto);font-weight:600;font-size:18px;line-height:1.2;
+  transition:transform .08s,opacity .08s}
+.btn:active{transform:scale(.98);opacity:.85}
+.btn-2{background:transparent;color:var(--texto);box-shadow:inset 0 0 0 1.5px var(--borda-forte)}
+.btn-3{min-height:44px;padding:0 12px;margin:0 -12px;color:var(--acao);font-weight:600;font-size:15px;border-radius:10px;white-space:nowrap;flex:none}
+.btn-3:active{opacity:.6}
+
+/* lista de baralhos */
+.rotulo{font-size:14px;font-weight:600;color:var(--texto-2);margin-bottom:10px}
+.lista{background:var(--superficie);border:1px solid var(--borda);border-radius:16px;overflow:hidden}
+.lista li+li{border-top:1px solid var(--borda)}
+.linha{display:flex;align-items:center;gap:8px;width:100%;min-height:60px;padding:10px 12px 10px 20px;text-align:left}
+.linha.parada{padding-right:20px}
+.linha:active{background:var(--fundo)}
+.linha-nome{flex:1;min-width:0;font-weight:500}
+.linha-meta{color:var(--texto-2);font-size:14px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.linha svg{color:var(--borda-forte);flex:none}
+
+/* cópia de segurança, discreta */
+.copia{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:auto;padding-top:24px;
+  color:var(--texto-2);font-size:14px}
+
+/* sessão: card ocupa o meio, trilho de botões embaixo */
+.progresso{height:4px;border-radius:2px;background:var(--borda);margin-top:8px;overflow:hidden}
+.progresso i{display:block;height:100%;background:var(--acao);border-radius:2px}
+.card{flex:1;display:flex;flex-direction:column;justify-content:flex-start;padding:11vh 0 28px;min-height:0;overflow-y:auto}
+.card-baralho{font-size:14px;color:var(--texto-2);margin-bottom:14px}
+.card-texto{font-family:var(--fonte-card);font-size:24px;line-height:1.35;font-weight:500;text-wrap:pretty}
+.card-fio{border:0;border-top:1px solid var(--borda);margin:24px 0}
+.resposta{font-weight:600}
+.lacuna{display:inline-block;min-width:56px;padding:0 10px;border-radius:8px;background:var(--marca-lacuna);text-align:center}
+b.lacuna{display:inline;font-weight:700;padding:1px 6px}
+.trilho{display:flex;flex-direction:column;align-items:center;gap:6px}
+.trilho.solto{gap:12px;margin-top:auto}
+.trilho.solto .copia{width:100%;margin-top:0;padding-top:8px}
+.notas{display:flex;gap:12px;width:100%}
+.nota{flex:1;flex-direction:column;gap:3px;min-height:64px}
+.nota small{font-size:13px;font-weight:500;opacity:.8}
+.desfazer{color:var(--texto-2);font-weight:500}
+
+/* fim da sessão */
+.fim{flex:1;display:flex;flex-direction:column;justify-content:center;padding:40px 0}
+.selo{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;background:var(--feito);color:var(--fundo);margin-bottom:20px}
+.titulo{font-size:30px;line-height:1.15;font-weight:700;letter-spacing:-.02em}
+.titulo.pagina{margin:12px 0 4px}
+
+/* ajustes */
+.bloco{margin-top:28px;display:flex;flex-direction:column;gap:12px}
+.bloco .rotulo{margin-bottom:0;font-size:16px;color:var(--texto)}
+.bloco .meta-2{margin-top:-6px}
+.opcoes{display:flex;gap:8px}
+.opcao{flex:1;min-height:52px;border-radius:14px;box-shadow:inset 0 0 0 1.5px var(--borda-forte);font-weight:600;font-size:18px;
+  font-variant-numeric:tabular-nums}
+.opcao.marcada{background:var(--acao);color:var(--acao-texto);box-shadow:none}
+.opcao:active{opacity:.7}
+.nota-rodape{margin-top:28px;color:var(--texto-2);font-size:14px}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* estados e avisos */
+.hoje .titulo{margin-top:4px}
+.aviso{margin-top:16px;padding:20px;border-radius:16px;background:var(--superficie);border:1px solid var(--borda)}
+.aviso p+p{margin-top:8px;color:var(--texto-2);font-size:14px}
+.aviso code{font:14px/1.4 ui-monospace,Menlo,monospace;word-break:break-word}
+.recado{margin-top:12px;color:var(--texto-2);font-size:14px;min-height:20px}
+.card[role=button]{cursor:pointer}
+input[type=file]{display:none}
