@@ -252,7 +252,16 @@
     return f;
   }
 
-  /* Próximo card da sessão: {id, novo} ou {fim: 'teto' | 'feito', restam}. */
+  /* Respostas que ainda faltam para esvaziar a fila, se todas forem acertos: card novo e card em aprendizado no
+     primeiro passo pedem duas (o padrão da biblioteca tem dois passos, 1 min e 10 min); os demais, uma. */
+  function respostasQueFaltam(E, f) {
+    var n = f.revisar.length + 2 * f.novos.length;
+    f.aprendendo.concat(f.depois).forEach(function (id) { var s = E.cartoes[id]; n += s.state === 1 && s.learning_steps === 0 ? 2 : 1; });
+    return n;
+  }
+
+  /* Próximo card da sessão: {id, novo, restam, respostas} ou {fim: 'teto' | 'feito', restam}.
+     restam = cards ainda na fila de hoje; respostas = quantas respostas faltam, se todas forem acertos. */
   function proximo(E, C, agora, filtro) {
     var f = fila(E, C, agora, filtro);
     var restam = f.aprendendo.length + f.revisar.length + f.novos.length + f.depois.length;
@@ -261,7 +270,7 @@
     var id = f.aprendendo[0] || f.revisar[0] || f.novos[0];
     if (!id && f.depois.length && E.cartoes[f.depois[0]].due - agora <= ADIANTAR_MS) id = f.depois[0];
     if (!id) return { fim: 'feito', restam: 0, voltam: f.depois.length };
-    return { id: id, novo: !E.cartoes[id], restam: restam };
+    return { id: id, novo: !E.cartoes[id], restam: restam, respostas: respostasQueFaltam(E, f) };
   }
 
   // Segundos por card: média das últimas 100 respostas; sem histórico, 10 s.
@@ -275,13 +284,12 @@
   function resumo(E, C, agora, filtro) {
     var f = fila(E, C, agora, filtro), hoje = diaDe(agora);
     var rever = f.aprendendo.length + f.revisar.length + f.depois.length;
-    // card novo passa pela tela pelo menos duas vezes no primeiro dia
-    var seg = (rever + 2 * f.novos.length) * segPorCard(E);
+    var seg = respostasQueFaltam(E, f) * segPorCard(E);
     var resta = Math.max(0, tetoSeg(E, agora) - gastoSeg(E, agora));
     var feitas = E.revisoes.filter(function (x) { return diaDe(x[1]) === hoje; }).length;
     return { rever: rever, novos: f.novos.length, total: rever + f.novos.length,
       minutos: Math.ceil(Math.min(seg, resta) / 60), minutosSemTeto: Math.ceil(seg / 60),
-      gastoMin: Math.round(gastoSeg(E, agora) / 60), tetoMin: tetoSeg(E, agora) / 60, tetoAtingido: resta <= 0,
+      gastoSeg: gastoSeg(E, agora), gastoMin: Math.round(gastoSeg(E, agora) / 60), tetoMin: tetoSeg(E, agora) / 60, tetoAtingido: resta <= 0,
       feitasHoje: feitas };
   }
 

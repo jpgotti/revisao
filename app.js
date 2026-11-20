@@ -8,6 +8,7 @@
   var sessao = null;   // sessão de revisão em andamento
   var tela = 'hoje', recado = '', pendente = null;
   var DIA_MS = 86400000;
+  var TRAVA_MS = 400; // os botões de nota ficam onde estava o "Mostrar resposta", e vice-versa: o segundo toque de um toque duplo é ignorado
   var SEMANA = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
   var SEM_CURTA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
   var MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
@@ -105,7 +106,9 @@
   }
   function haQuanto(ms, agora) { var n = diasEntre(ms, agora); return n <= 0 ? 'hoje' : n === 1 ? 'ontem' : 'há ' + n + ' dias'; }
   function plural(n, um, varios) { return n + ' ' + (n === 1 ? um : varios); }
-  function copiaTexto(agora) { return E.copiaEm ? 'Cópia de segurança: ' + haQuanto(E.copiaEm, agora) : 'Sem cópia de segurança'; }
+  // O app sabe quando gerou o arquivo da cópia; não tem como saber se ele ficou salvo. Por isso diz "gerada", nunca "guardada".
+  function copiaTexto(agora) { return E.copiaEm ? 'Cópia gerada: ' + haQuanto(E.copiaEm, agora) : 'Sem cópia de segurança'; }
+  function minTexto(seg) { return seg < 60 ? 'menos de 1 min' : Math.round(seg / 60) + ' min'; }
   function depoisDeHoje(agora) { // o que dizer quando hoje acabou
     var am = RV.resumo(E, C, agora + DIA_MS).total;
     if (am) return 'Amanhã: ' + plural(am, 'card', 'cards');
@@ -120,7 +123,7 @@
     h += '<section class="hoje">';
     if (!r.total) {
       h += '<h1 class="titulo">Em dia</h1><p class="meta">' + (depoisDeHoje(agora) || 'Nenhum card para rever.') + '</p>';
-      if (r.feitasHoje) h += '<p class="meta-2">Hoje: ' + plural(r.feitasHoje, 'resposta', 'respostas') + ' em ' + plural(Math.max(1, r.gastoMin), 'min', 'min') + '</p>';
+      if (r.feitasHoje) h += '<p class="meta-2">Hoje: ' + plural(r.feitasHoje, 'resposta', 'respostas') + ' em ' + minTexto(r.gastoSeg) + '</p>';
     } else if (r.tetoAtingido) {
       h += '<p class="numero">' + r.total + '</p><p class="numero-rotulo">' + (r.total === 1 ? 'card ficou para depois' : 'cards ficaram para depois') + '</p>' +
         '<p class="meta">Teto de hoje atingido: ' + r.tetoMin + ' min</p>' +
@@ -128,12 +131,12 @@
     } else {
       h += '<p class="numero">' + r.total + '</p><p class="numero-rotulo">' + (r.total === 1 ? 'card para hoje' : 'cards para hoje') + '</p>' +
         '<p class="meta">Cerca de ' + r.minutos + ' min · teto de ' + r.tetoMin + ' min</p>' +
-        '<p class="meta-2">' + r.rever + ' para rever · ' + plural(r.novos, 'novo', 'novos') + (r.gastoMin ? ' · ' + r.gastoMin + ' min já feitos hoje' : '') + '</p>' +
+        '<p class="meta-2">' + [r.rever ? r.rever + ' para rever' : '', r.novos ? plural(r.novos, 'novo', 'novos') : '', r.gastoSeg >= 60 ? minTexto(r.gastoSeg) + ' já feitos hoje' : ''].filter(Boolean).join(' · ') + '</p>' +
         '<button class="btn" data-acao="revisar">Revisar</button>';
     }
     h += '</section><section class="baralhos"><h2 class="rotulo">Baralhos</h2><ul class="lista">';
     C.baralhos.forEach(function (b) {
-      var n = RV.resumo(E, C, agora, b.id).total, dentro = '<span class="linha-nome">' + RV_esc(b.nome) + '</span><span class="linha-meta">' + (n ? n + ' hoje' : 'em dia') + '</span>';
+      var n = RV.resumo(E, C, agora, b.id).total, dentro = '<span class="linha-nome">' + RV_esc(b.nome) + '</span><span class="linha-meta">' + (!n ? 'em dia' : r.tetoAtingido ? n + ' para depois' : n + ' hoje') + '</span>';
       h += n && !r.tetoAtingido ? '<li><button class="linha" data-acao="revisar" data-baralho="' + b.id + '">' + dentro + ICO.seta + '</button></li>'
         : '<li><div class="linha parada">' + dentro + '</div></li>';
     });
@@ -143,9 +146,9 @@
   }
 
   function telaSessao() {
-    var agora = Date.now(), k = C.porId[sessao.atual], total = sessao.feitas + sessao.restam, h = '';
+    var agora = Date.now(), k = C.porId[sessao.atual], total = sessao.feitas + sessao.respostas, h = '';
     var baralho = C.baralhos.filter(function (b) { return b.id === k.baralho; })[0];
-    h += '<header class="topo"><button class="icone-btn esq" data-acao="voltar" aria-label="Fechar">' + ICO.fechar + '</button><p class="conta">' + (sessao.feitas + 1) + ' de ' + total + '</p></header>';
+    h += '<header class="topo"><button class="icone-btn esq" data-acao="voltar" aria-label="Fechar">' + ICO.fechar + '</button><p class="conta">' + (sessao.restam === 1 ? 'falta 1 card' : 'faltam ' + sessao.restam + ' cards') + '</p></header>';
     h += '<div class="progresso"><i style="width:' + Math.round(100 * sessao.feitas / total) + '%"></i></div>';
     h += '<section class="card" data-acao="' + (sessao.revelado ? '' : 'mostrar') + '"><p class="card-baralho">' + RV_esc(baralho.nome) + '</p>';
     if (!sessao.revelado) h += '<p class="card-texto">' + k.frente + '</p>';
@@ -170,9 +173,9 @@
         '<p class="meta-2">' + (f.restam === 1 ? 'Ficou 1 card para depois' : 'Ficaram ' + f.restam + ' cards para depois') + '</p>';
     } else {
       var outros = sessao.filtro ? RV.resumo(E, C, agora).total : 0;
-      var min = Math.round((RV.gastoSeg(E, agora) - sessao.seg0) / 60);
+      var seg = RV.gastoSeg(E, agora) - sessao.seg0;
       h += '<p class="selo">' + ICO.feito + '</p><h1 class="titulo">' + (outros ? 'Baralho feito por hoje' : 'Feito por hoje') + '</h1>' +
-        '<p class="meta">' + linha + ' · ' + (min < 1 ? 'menos de 1 min' : min + ' min') + '</p>' +
+        '<p class="meta">' + linha + ' · ' + minTexto(seg) + '</p>' +
         '<p class="meta-2">' + (outros ? 'Ainda há ' + plural(outros, 'card', 'cards') + ' de outros baralhos hoje' : depoisDeHoje(agora)) + '</p>';
     }
     h += '</section><footer class="trilho solto"><button class="btn" data-acao="voltar">Concluir</button>';
@@ -191,11 +194,11 @@
       h += '<button class="opcao' + (m ? ' marcada' : '') + '" role="radio" aria-checked="' + m + '" data-acao="teto" data-min="' + t + '">' + t + '</button>';
     });
     h += '</div></section><section class="bloco"><h2 class="rotulo">Cópia de segurança</h2>';
-    h += '<p class="meta-2">' + (n ? (E.copiaEm ? 'Última: ' + haQuanto(E.copiaEm, agora) : 'Ainda não feita') + ' · ' + plural(n, 'resposta', 'respostas') + ' no histórico' : 'Ainda não há respostas para guardar') + '</p>';
+    h += '<p class="meta-2">' + (n ? (E.copiaEm ? 'Última gerada: ' + haQuanto(E.copiaEm, agora) : 'Ainda não feita') + ' · ' + plural(n, 'resposta', 'respostas') + ' no histórico' : 'Ainda não há respostas para guardar') + '</p>';
     if (n) h += '<button class="btn" data-acao="copia">Guardar cópia</button>';
     h += '<button class="btn btn-2" data-acao="escolher">Restaurar de uma cópia</button><input type="file" id="arquivo" accept=".json,application/json,text/plain">';
     h += '<p class="recado" role="status">' + RV_esc(recado) + '</p></section>';
-    h += '<p class="nota-rodape">O histórico fica só neste aparelho. A cópia é o que permite recuperar tudo se o app for apagado.</p>';
+    h += '<p class="nota-rodape">O histórico fica só neste aparelho. A cópia é um arquivo: guarde em Arquivos ou no iCloud. É ela que permite recuperar tudo se o app for apagado.</p>';
     return '<main class="tela">' + h + '</main>';
   }
 
@@ -238,7 +241,7 @@
   /* ---------- sessão ---------- */
   function comecar(filtro) {
     var agora = Date.now();
-    sessao = { filtro: filtro || null, feitas: 0, acertos: 0, ultimo: null, forcar: null, atual: null, restam: 0, revelado: false,
+    sessao = { filtro: filtro || null, feitas: 0, acertos: 0, ultimo: null, forcar: null, atual: null, restam: 0, respostas: 0, revelado: false,
       inicio: 0, reveladoEm: 0, fim: null, seg0: RV.gastoSeg(E, agora) };
     history.pushState({ tela: 'sessao' }, '');
     avancar();
@@ -246,15 +249,15 @@
 
   function avancar() {
     var agora = Date.now(), p = RV.proximo(E, C, agora, sessao.filtro);
-    if (sessao.forcar) { p = { id: sessao.forcar, restam: Math.max(1, p.restam || 0) }; sessao.forcar = null; }
+    if (sessao.forcar) { p = { id: sessao.forcar, restam: Math.max(1, p.restam || 0), respostas: Math.max(1, p.respostas || 0) }; sessao.forcar = null; }
     if (p.fim) { sessao.fim = p; return trocar('fim'); }
-    sessao.fim = null; sessao.atual = p.id; sessao.restam = p.restam; sessao.revelado = false; sessao.inicio = agora;
+    sessao.fim = null; sessao.atual = p.id; sessao.restam = p.restam; sessao.respostas = p.respostas; sessao.revelado = false; sessao.inicio = agora;
     trocar('sessao');
   }
 
   function darNota(n) {
     var agora = Date.now();
-    if (!sessao || !sessao.revelado || agora - sessao.reveladoEm < 300) return; // toque duplo no "Mostrar resposta" não vira nota
+    if (!sessao || !sessao.revelado || agora - sessao.reveladoEm < TRAVA_MS) return; // toque duplo no "Mostrar resposta" não vira nota
     var f = RV.responder(E, sessao.atual, n, agora, (agora - sessao.inicio) / 1000);
     sessao.feitas++; if (n === RV.ACERTEI) sessao.acertos++;
     sessao.ultimo = f;
@@ -275,7 +278,7 @@
   /* ---------- cópia de segurança ---------- */
   function guardarCopia() {
     var agora = Date.now(), texto = RV.exportar(E, agora), nome = 'revisao-copia-' + RV.diaDe(agora) + '.json', arq = null;
-    var feito = function () { E.copiaEm = agora; gravar(gravarMeta); recado = 'Cópia guardada: ' + plural(E.revisoes.length, 'resposta', 'respostas') + '.'; mostrar(tela); };
+    var feito = function () { E.copiaEm = agora; gravar(gravarMeta); recado = 'Cópia gerada, com ' + plural(E.revisoes.length, 'resposta', 'respostas') + '. Confira se o arquivo ficou salvo.'; mostrar(tela); };
     var baixar = function () {
       var a = document.createElement('a'), url = URL.createObjectURL(new Blob([texto], { type: 'application/json' }));
       a.href = url; a.download = nome; document.body.appendChild(a); a.click(); a.remove();
@@ -312,7 +315,10 @@
     var alvo = ev.target.closest('[data-acao]'); if (!alvo) return;
     var acao = alvo.getAttribute('data-acao'), agora = Date.now();
     if (acao === 'revisar') comecar(alvo.getAttribute('data-baralho'));
-    else if (acao === 'mostrar') { sessao.revelado = true; sessao.reveladoEm = agora; mostrar('sessao'); }
+    else if (acao === 'mostrar') {
+      if (agora - sessao.inicio < TRAVA_MS) return; // toque duplo na nota não revela o card seguinte
+      sessao.revelado = true; sessao.reveladoEm = agora; mostrar('sessao');
+    }
     else if (acao === 'nota') darNota(+alvo.getAttribute('data-nota'));
     else if (acao === 'desfazer') desfazerUltima();
     else if (acao === 'voltar') history.back();

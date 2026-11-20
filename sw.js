@@ -1,6 +1,6 @@
 /* Funciona sem internet: guarda o app na primeira visita. Com rede, busca primeiro a versão nova de tudo que é texto
    (cards, código, estilo). Trocar VERSAO a cada publicação, senão o celular pode mostrar a versão antiga. */
-const VERSAO = 'revisao-v1';
+const VERSAO = 'revisao-v2';
 const BASE = ['./', 'index.html', 'app.css', 'app.js', 'nucleo.js', 'lib/ts-fsrs.umd.js', 'cartoes.md', 'manifest.webmanifest',
   'icone-192.png', 'icone-512.png', 'icone-180.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(VERSAO).then(c => c.addAll(BASE)).then(() => self.skipWaiting())); });

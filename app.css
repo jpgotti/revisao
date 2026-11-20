@@ -64,7 +64,7 @@ ul{list-style:none}
 .resposta{font-weight:600}
 .lacuna{display:inline-block;min-width:56px;padding:0 10px;border-radius:8px;background:var(--marca-lacuna);text-align:center}
 b.lacuna{display:inline;font-weight:700;padding:1px 6px}
-.trilho{display:flex;flex-direction:column;align-items:center;gap:6px}
+.trilho{display:flex;flex-direction:column;align-items:center;gap:12px}
 .trilho.solto{gap:12px;margin-top:auto}
 .trilho.solto .copia{width:100%;margin-top:0;padding-top:8px}
 .notas{display:flex;gap:12px;width:100%}
